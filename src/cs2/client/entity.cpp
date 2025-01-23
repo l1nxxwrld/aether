@@ -31,8 +31,8 @@ namespace aether::cs2 {
         );
     }
 
-    std::uint8_t C_BaseEntity::team_number() const {
-        return *reinterpret_cast<std::uint8_t*>(
+    e_team_number C_BaseEntity::team_number() const {
+        return *reinterpret_cast<e_team_number*>(
             reinterpret_cast<std::uintptr_t>(this) +
             0x3E3
         );

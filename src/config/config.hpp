@@ -8,6 +8,8 @@ namespace aether {
 		config(context& cfg);
 
 		bool aimbot{ false };
+		bool show_aimbot_fov{ false };
+		float aimbot_fov{ 10.0f };
 
 		bool esp{ false };
 		bool snaplines{ false };

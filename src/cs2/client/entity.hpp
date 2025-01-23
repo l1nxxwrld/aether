@@ -4,13 +4,18 @@
 #include "../../math/qangle.hpp"
 
 namespace aether::cs2 {
+    enum class e_team_number : std::uint8_t {
+        terrorist = 2,
+        counter_terrorist = 3,
+    };
+
     class C_BaseEntity {
     public:
         const char* get_entity_type_name() const;
         bool is_dormant() const;
         std::int32_t health() const;
         std::uint32_t flags() const;
-        std::uint8_t team_number() const;
+        e_team_number team_number() const;
         std::int32_t entity_index() const;
     };
 }

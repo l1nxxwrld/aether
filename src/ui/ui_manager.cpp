@@ -105,13 +105,9 @@ namespace aether {
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, ImColor(220, 38, 38).Value);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, ImColor(220, 38, 38).Value);
 
-        if (m_config.show_aimbot_view) {
-            m_aimbot_view->render();
-        }
+        m_aimbot_view->render();
 
-        if (m_config.show_esp_view) {
-            m_esp_view->render();
-        }
+        m_esp_view->render();
 
         if (m_is_open && m_config.show_editor) {
 

@@ -18,7 +18,15 @@ namespace aether {
         return rad * (std::numbers::pi_v<float> / 180.0f);
     }
 
-    // I think this is what we call the create move function?
+    static qangle calc_angle(const vec3& src, const vec3& dst) {
+        const auto delta{ dst - src };
+        return qangle{
+            rad_to_deg(-std::asin(delta.z / delta.magnitude())),
+            rad_to_deg(std::atan2(delta.y, delta.x))
+        };
+    }
+
+    // create move?
     bool __fastcall context::create_move(cs2::CCSGOInput* input, std::int32_t a2, std::int64_t a3) {
 
         if (!get().cfg()->aimbot) {
@@ -35,7 +43,7 @@ namespace aether {
             if (!player or !player->is_alive() or player == local_player) {
                 continue;
             }
-            const auto& player_team{ player->team_number() };
+
             if (player->team_number() == local_player->team_number()) {
                 continue;
             }
@@ -45,31 +53,28 @@ namespace aether {
                 continue;
             }
 
-            const auto distance{ std::sqrtf(
-                local_player->get_pawn()->eye_origin().distance_to(player_pawn->eye_origin())
-            ) };
-
+            const auto distance{ local_player->get_pawn()->eye_origin().distance_to(player_pawn->eye_origin()) };
             if (distance < closest_distance) {
                 closest_distance = distance;
                 closest_pawn = player_pawn;
             }
-        }
-
-        if (closest_pawn) {
-
-            qangle angle{ input->view_angles() };
 
             const auto& src{ local_pawn->eye_origin() };
-            const auto& dst{ closest_pawn->eye_origin() };
-            const auto delta{ src - dst };
+            const auto& dst{ player_pawn->eye_origin() };
 
-            angle.x = rad_to_deg(std::asinf(delta.z / delta.magnitude()));
-            angle.y = rad_to_deg(std::atan2f(-delta.y, -delta.x));
+            const auto& src_angles{ input->view_angles() };
 
-            angle.x = std::clamp(angle.x, -89.0f, 89.0f);
-            angle.y = std::clamp(angle.y, -189.0f, 189.0f);
+            auto dst_angles{ calc_angle(src, dst) };
 
-            input->set_view_angles(angle);
+            dst_angles.x = std::clamp(dst_angles.x, -89.0f, 89.0f);
+            dst_angles.y = std::clamp(dst_angles.y, -189.0f, 189.0f);
+
+            if (std::abs(dst_angles.x - src_angles.x) <= get().cfg()->aimbot_fov
+                && std::abs(dst_angles.y - src_angles.y) <= get().cfg()->aimbot_fov) {
+
+                input->set_view_angles(dst_angles);
+                return get().m_create_move(input, a2, a3);
+            }
         }
 
         return get().m_create_move(input, a2, a3);
