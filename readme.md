@@ -1,4 +1,10 @@
 # aether
-very **WIP** CS2 research & experimentation
+Experimental Counter-Strike 2 cheat
 
-![ui image](./assets/images/image.png)
+### Features
+- Basic aimbot without visibility check
+  - FOV constraint
+- Snapline ESP
+- Lua scripting system
+
+![ui image](./assets/images/ui.png)

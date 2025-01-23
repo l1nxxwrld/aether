@@ -14,9 +14,9 @@ namespace aether {
 
 	void esp_view::render() {
         auto& ui{ *context::get().ui() };
-        auto& cfg{ *context::get().cfg() };
+        auto& cfg{ *context::get().cfg()->esp };
 
-        if (cfg.esp) {
+        if (cfg.enabled) {
 
             render_player_esp();
         }
@@ -29,14 +29,14 @@ namespace aether {
         ImGui::SetNextWindowSize({ 250.0f, 250.0f }, ImGuiCond_Once);
 
         if (ImGui::Begin("ESP")) {
-            ImGui::Checkbox("Enabled", &cfg.esp);
-            ImGui::Checkbox("Snaplines", &cfg.snaplines);
+            ImGui::Checkbox("Enabled", &cfg.enabled);
+            ImGui::Checkbox("Show Snaplines", &cfg.show_snaplines);
         }
         ImGui::End();
 	}
 
     void esp_view::render_player_esp() {
-        auto& cfg{ *context::get().cfg() };
+        auto& cfg{ *context::get().cfg()->esp };
 
         auto& draw_list{ *ImGui::GetBackgroundDrawList() };
         const auto& io{ ImGui::GetIO() };
@@ -66,7 +66,7 @@ namespace aether {
 
             const auto& vm{ cs2::CViewRender::get()->view_matrix() };
 
-            if (cfg.snaplines) {
+            if (cfg.show_snaplines) {
 
                 const auto [x, y, z, w] = vm * player_pos;
                 if (w < 0.01f) {
@@ -81,8 +81,8 @@ namespace aether {
                 draw_list.AddLine(
                     { io.DisplaySize.x * 0.5f, io.DisplaySize.y },
                     screen_pos,
-                    ImColor(255, 255, 255),
-                    2.0f
+                    ImColor(120, 81, 169, 200),
+                    1.0f
                 );
             }
         }

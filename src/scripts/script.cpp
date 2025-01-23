@@ -1,12 +1,13 @@
 #include "../cs2/memory_mgr.hpp"
-#include "../context.hpp"
-#include "../ui/ui_manager.hpp"
-#include "../ui/components/code_editor.hpp"
 #include "../cs2/client/weapon.hpp"
 #include "../cs2/client/player_pawn.hpp"
 #include "../cs2/client/player_controller.hpp"
 #include "../cs2/client/entity_system.hpp"
 #include "../cs2/schemasystem/schema_system.hpp"
+#include "../context.hpp"
+#include "../config/config.hpp"
+#include "../ui/ui_manager.hpp"
+#include "../ui/components/code_editor.hpp"
 #include "script.hpp"
 
 namespace aether {
@@ -15,9 +16,7 @@ namespace aether {
 	}
 
 	lua_script::lua_script(const std::string& code)
-		: m_state(std::make_unique<sol::state>()), m_code(code) {
-
-	}
+		: m_state(std::make_unique<sol::state>()), m_code(code) {}
 
 	bool lua_script::init() {
 

@@ -104,6 +104,8 @@ namespace aether {
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, ImColor(220, 38, 38).Value);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, ImColor(220, 38, 38).Value);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, ImColor(220, 38, 38).Value);
+        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImColor(220, 38, 38).Value);
+        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImColor(220, 38, 38).Value);
 
         m_aimbot_view->render();
 
@@ -177,7 +179,7 @@ namespace aether {
             ImGui::PopFont();
         }
 
-        ImGui::PopStyleColor(17);
+        ImGui::PopStyleColor(19);
         ImGui::PopStyleVar(8);
         ImGui::PopFont();
 
