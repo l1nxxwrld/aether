@@ -10,7 +10,8 @@ namespace aether {
 	public:
 		bool enabled{ false };
 		bool show_fov{ false };
-		float fov{ 10.0f };
+		float fov{ 3.0f };
+		float dps{ 10.0f };
 	};
 
 	class esp_state {

@@ -15,13 +15,13 @@ namespace aether {
 
         const auto found_handler = [this](const std::string& module_name, const std::string& pattern_name) {
 #ifdef _DEBUG
-            std::printf("found %s:%s\n", module_name.c_str(), pattern_name.c_str());
+            std::printf("found %s:%s\n", module_name.c_str(), pattern_name.c_str()); // todo: print to cs2 console
 #endif
         };
 
         const auto error_handler = [](const std::string& module_name, const std::string& pattern_name, const xscan::pattern& pattern) -> bool {
 #ifdef _DEBUG
-            std::printf("failed to find %s:%s\n", module_name.c_str(), pattern_name.c_str());
+            std::printf("failed to find %s:%s\n", module_name.c_str(), pattern_name.c_str()); // todo: print to cs2 console
 #endif
             return false;
         };
@@ -59,6 +59,9 @@ namespace aether {
         batch_scan inputsystem("inputsystem.dll", found_handler, error_handler);
         inputsystem.add("inputsystem", "48 8B 0D ? ? ? ? 49 8B D8", [this](xscan::cursor p) -> bool {
             return (p_input_system = p.add(3).rip());
+        });
+        inputsystem.add("apply_input_stack", "4C 89 34 E8 E8 ? ? ? ?", [this](xscan::cursor p) -> bool {
+            return (f_apply_input_stack = p.add(5).rip());
         });
 
         if (!inputsystem.scan()) {

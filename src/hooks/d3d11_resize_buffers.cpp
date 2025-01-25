@@ -8,11 +8,11 @@ namespace aether {
 		UINT width,
 		UINT height,
 		DXGI_FORMAT new_format,
-		UINT swap_chain_Flags) {
+		UINT swap_chain_flags) {
 
 		ImGui_ImplDX11_InvalidateDeviceObjects();
 
-		const auto result{ get().m_resize_buffers(swap_chain, buffer_count, width, height, new_format, swap_chain_Flags) };
+		const auto result{ context::get().m_resize_buffers(swap_chain, buffer_count, width, height, new_format, swap_chain_flags) };
 
 		ImGui_ImplDX11_CreateDeviceObjects();
 

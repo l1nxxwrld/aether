@@ -12,6 +12,6 @@ namespace aether::cs2 {
 
         void set_cursor_clip_mode(std::int32_t mode);
 
-        void set_relative_mouse_mode(std::int32_t mode);
+        void set_relative_mouse_mode(bool mode);
     };
 }

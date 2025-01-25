@@ -65,7 +65,7 @@ namespace aether {
 			return false;
 		});
 
-		auto mem{ table["mem"].get_or_create<sol::table>() };
+		auto mem{ table["memory"].get_or_create<sol::table>() };
 
 		mem.set_function("read_u8", [](std::uint64_t address) -> std::uint8_t { return *reinterpret_cast<std::uint8_t*>(address);  });
 		mem.set_function("read_u16", [](std::uint64_t address) -> std::uint16_t { return *reinterpret_cast<std::uint16_t*>(address); });

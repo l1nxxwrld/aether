@@ -9,13 +9,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 namespace aether {
 	LRESULT CALLBACK context::wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
-		auto& io{ ImGui::GetIO() };
-		const auto& ui{ *get().ui() };
-		
 		if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
 			return 1;
 		}
-		if (ui.is_open()) {
+
+		if (context::get().ui()->is_open()) {
 			switch (msg) {
 			case WM_KEYDOWN:
 			case WM_KEYUP:
@@ -36,15 +34,9 @@ namespace aether {
 			}
 		}
 
-		const auto result{ CallWindowProcA(
-			reinterpret_cast<WNDPROC>(get().m_wndproc),
+		return CallWindowProcA(
+			reinterpret_cast<WNDPROC>(context::get().m_wndproc),
 			hwnd, msg, wparam, lparam
-		) };
-
-		if (get().m_shutdown) {
-			get().uninit();
-		}
-
-		return result;
+		);
 	}
 }

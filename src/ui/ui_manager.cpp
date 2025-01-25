@@ -5,6 +5,7 @@
 #include "../cs2/client/player_controller.hpp"
 #include "../cs2/client/player_pawn.hpp"
 #include "../cs2/engine/rendering_world_session.hpp"
+#include "../cs2/inputsystem/input_stack_system.hpp"
 #include "../cs2/inputsystem/input_system.hpp"
 #include "../context.hpp"
 #include "../scripts/script_mgr.hpp"
@@ -47,26 +48,21 @@ namespace aether {
 
         m_ctx.scripts()->add_script((m_editor_script = std::make_shared<lua_script>()));
 
+        this->set_open(true);
         return true;
+    }
+
+    void ui_manager::uninit() {
+        this->set_open(false);
     }
 
     void ui_manager::render() {
 
         m_ctx.scripts()->on_pre_ui();
 
+        auto& iss{ *cs2::CInputStackSystem::get() };
         if (ImGui::IsKeyPressed(ImGuiKey_Insert, false)) {
-
-            m_is_open = !m_is_open;
-            if (!m_is_open) {
-                cs2::CInputSystem::get()->set_relative_mouse_mode(1);
-            }
-        }
-
-        auto& io{ ImGui::GetIO() };
-        io.MouseDrawCursor = m_is_open;
-
-        if (m_is_open) {
-            cs2::CInputSystem::get()->set_relative_mouse_mode(0);
+            this->set_open(!this->is_open());
         }
 
         ImGui::PushFont(m_fonts.roboto_regular);
@@ -110,6 +106,25 @@ namespace aether {
         m_aimbot_view->render();
 
         m_esp_view->render();
+
+        if (m_is_open && m_config.show_input_system) {
+            if (ImGui::Begin("Input System")) {
+                for (std::int32_t i{ 0 }; i < iss.num_entries(); i++) {
+                    const auto& entry{ *iss.get_entry(i) };
+
+                    ImGui::Text("%s (%d)", entry.name, i);
+                    ImGui::Text(" - %s", entry.enabled ? "enabled" : "disabled");
+                    ImGui::Text(" - cursor %s", entry.is_cursor_visible ? "visible" : "invisible");
+                    ImGui::Text(" - cursor %s", entry.is_relative_mouse_mode ? "relative" : "not relative");
+                    ImGui::Text(" - IME %s", entry.allow_ime ? "allowed" : "disallowed");
+                    ImGui::Text(" - state: %08X", entry.state);
+                    ImGui::Text(" - capture: %016X", entry.pcapture);
+                    ImGui::Text(" - cursor clip: %016X", entry.pcursor_clip);
+                    ImGui::Text("");
+                }
+            }
+            ImGui::End();
+        }
 
         if (m_is_open && m_config.show_editor) {
 
@@ -196,6 +211,11 @@ namespace aether {
 
     bool ui_manager::is_open() const {
         return m_is_open;
+    }
+
+    void ui_manager::set_open(bool open) {
+        m_is_open = open;
+        cs2::CInputStackSystem::get()->apply(0xffff'ffff);
     }
 
     const std::unique_ptr<ui_code_editor>& ui_manager::editor() {

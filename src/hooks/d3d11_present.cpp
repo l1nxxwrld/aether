@@ -3,6 +3,8 @@
 #include <imgui_impl_win32.h>
 #include "../ui/ui_manager.hpp"
 #include "../cs2/rendersystemdx11/render_device.hpp"
+#include "../cs2/inputsystem/input_system.hpp"
+#include "../cs2/inputsystem/input_stack_system.hpp"
 #include "../context.hpp"
 
 namespace aether {
@@ -15,7 +17,7 @@ namespace aether {
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		get().m_ui->render();
+		context::get().ui()->render();
 
 		ImGui::Render();
 
@@ -32,6 +34,6 @@ namespace aether {
 
 		device_context->OMSetRenderTargets(1, &o_rtv, o_dsv);
 
-		return get().m_present(swap_chain, sync_interval, flags);
+		return context::get().m_present(swap_chain, sync_interval, flags);
 	}
 }

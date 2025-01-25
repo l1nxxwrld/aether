@@ -33,7 +33,8 @@ namespace aether {
         if (ImGui::Begin("Aimbot")) {
             ImGui::Checkbox("Enabled", &cfg.enabled);
             ImGui::Checkbox("Show FOV", &cfg.show_fov);
-            ImGui::SliderFloat("FOV", &cfg.fov, 5.0f, 90.0f, "%.0f");
+            ImGui::SliderFloat("FOV", &cfg.fov, 1.0f, 90.0f, "%.1f");
+            ImGui::SliderFloat("DPS", &cfg.dps, 0.0f, 25.0f, "%.0f");
         }
         ImGui::End();
 	}

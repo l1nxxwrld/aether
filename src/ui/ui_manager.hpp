@@ -17,6 +17,7 @@ namespace aether {
         bool show_editor{ true };
         bool show_aimbot_view{ true };
         bool show_esp_view{ true };
+        bool show_input_system{ false };
     };
 
     class ui_manager {
@@ -25,12 +26,15 @@ namespace aether {
         ~ui_manager();
 
         bool init();
+        void uninit();
 
         void render();
 
         const ui_config& config() const;
         ui_config& config();
+
         bool is_open() const;
+        void set_open(bool open);
 
         const std::unique_ptr<ui_code_editor>& editor();
         const std::shared_ptr<lua_script>& editor_script();

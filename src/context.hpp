@@ -9,6 +9,7 @@ namespace aether {
 
     namespace cs2 {
         class CCSGOInput;
+        class CInputStackSystem;
     }
 
     class context {
@@ -17,7 +18,7 @@ namespace aether {
 
         bool init();
         bool uninit();
-        bool running() const;
+        bool awaiting_shutdown() const;
         void queue_shutdown();
 
         const std::unique_ptr<ui_manager>& ui() const;
@@ -45,13 +46,17 @@ namespace aether {
             UINT width,
             UINT height,
             DXGI_FORMAT new_format,
-            UINT swap_chain_Flags);
+            UINT swap_chain_flags);
 
         decltype(&resize_buffers) m_resize_buffers{ nullptr };
 
         static bool __fastcall create_move(cs2::CCSGOInput* input, std::int32_t a2, std::int64_t a3);
 
         decltype(&create_move) m_create_move{ nullptr };
+
+        static void __fastcall apply_input_stack(cs2::CInputStackSystem* iss, std::uint32_t state);
+
+        decltype(&apply_input_stack) m_apply_input_stack{ nullptr };
 
     protected:
         bool m_initialized{ false };

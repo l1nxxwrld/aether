@@ -23,6 +23,7 @@ namespace aether {
         class CSchemaSystem;
         class CSchemaSystemTypeScope;
         class CInputSystem;
+        class CInputStackSystem;
         class CInputService;
     }
 
@@ -56,7 +57,8 @@ namespace aether {
         std::int32_t o_view_render_view_matrix{ 0x298 };
         std::int32_t o_rendering_world_session_get_world_name{};
 
-        __int64(__stdcall* f_find_binding)(cs2::CSchemaSystemTypeScope* pthis, const char* name) {};
+        using apply_input_stack_t = void __fastcall(cs2::CInputStackSystem* iss, std::uint32_t state);
+        apply_input_stack_t* f_apply_input_stack;
 
     protected:
         nlohmann::json m_json;

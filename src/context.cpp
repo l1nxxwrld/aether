@@ -1,3 +1,4 @@
+#include <cassert>
 #include <Windows.h>
 #include <MinHook.h>
 #include <imgui.h>
@@ -6,6 +7,7 @@
 #include "utils/vmt.hpp"
 #include "cs2/memory_mgr.hpp"
 #include "cs2/interface_mgr.hpp"
+#include "cs2/inputsystem/input_stack_system.hpp"
 #include "cs2/rendersystemdx11/render_device.hpp"
 #include "cs2/rendersystemdx11/swap_chain.hpp"
 #include "cs2/tier0/platform.hpp"
@@ -21,36 +23,28 @@ namespace aether {
 		return instance;
 	}
 
-	static FILE* g_conout{ 0 };
-
 	bool context::init() {
 		if (m_initialized) {
 			return false;
 		}
 
-		AllocConsole();
-		freopen_s(&g_conout, "CONOUT$", "w", stdout);
-
 		g_memory = std::make_unique<memory_mgr>();
-		if (!g_memory->init()) {
-			return false;
-		}
+
+		assert(g_memory->init());
 
 		g_interfaces = std::make_unique<interface_mgr>();
-
 		m_cfg = std::make_unique<config>(*this);
 		m_ui = std::make_unique<ui_manager>(*this);
 		m_scripts = std::make_unique<script_mgr>();
 
+		assert(MH_Initialize() == MH_OK);
+		assert(MH_CreateHook(g_memory->f_apply_input_stack, &apply_input_stack, reinterpret_cast<void**>(&m_apply_input_stack)) == MH_OK);
+
 		m_create_move = vmt_method::from_class(*g_memory->p_csgo_input, 21).exchange(&create_move);
 
-		if (!init_ui()) {
-			return false;
-		}
-
-		if (!m_scripts->init()) {
-			return false;
-		}
+		assert(MH_EnableHook(MH_ALL_HOOKS) == MH_OK);
+		assert(init_ui());
+		assert(m_scripts->init());
 
 		return true;
 	}
@@ -67,7 +61,10 @@ namespace aether {
 		const auto d3d11_swap_chain{ swap_chain->get_d3d11_swap_chain() };
 		const auto window_handle{ swap_chain->get_window_handle() };
 
-		MH_DisableHook(MH_ALL_HOOKS);
+		assert(MH_DisableHook(MH_ALL_HOOKS) == MH_OK);
+		assert(MH_Uninitialize() == MH_OK);
+
+		m_ui->uninit();
 
 		SetWindowLongPtrA(window_handle, GWLP_WNDPROC, m_wndproc);
 		vmt_method::from_class(*g_memory->p_csgo_input, 21).exchange(m_create_move);
@@ -78,14 +75,11 @@ namespace aether {
 		ImGui_ImplDX11_Shutdown();
 		ImGui::DestroyContext();
 
-		fclose(g_conout);
-		FreeConsole();
-
 		return true;
 	}
 
-	bool context::running() const {
-		return m_initialized && !m_shutdown;
+	bool context::awaiting_shutdown() const {
+		return m_initialized && m_shutdown;
 	}
 
 	void context::queue_shutdown() {
@@ -168,7 +162,7 @@ namespace aether {
 			FreeLibraryAndExitThread(module_base, EXIT_FAILURE);
 		}
 
-		while (context::get().running()) {
+		while (!context::get().awaiting_shutdown()) {
 			Sleep(1000);
 		}
 
