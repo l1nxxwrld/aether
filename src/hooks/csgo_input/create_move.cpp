@@ -1,9 +1,7 @@
 #include <cmath>
 #include <numeric>
-#include <numbers>
 #include <algorithm>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include "../../cs2/client/entity_system.hpp"
 #include "../../cs2/client/player_controller.hpp"
 #include "../../cs2/client/player_pawn.hpp"
@@ -15,7 +13,6 @@ namespace aether {
     static qangle calc_angle(const vec3& src, const vec3& dst);
 
     bool __fastcall context::create_move(cs2::CCSGOInput* input, std::int32_t a2, std::int64_t a3) {
-
         auto& cfg{ *context::get().cfg()->aimbot };
         if (!cfg.enabled) {
             return context::get().m_create_move(input, a2, a3);
@@ -24,58 +21,44 @@ namespace aether {
         const auto local_player{ cs2::CCSPlayerController::get_local_player() };
         const auto local_pawn{ local_player->get_pawn() };
 
-        const auto& src_angles{ input->view_angles() };
-        qangle dst_angles{ src_angles };
+        auto& src_angles{ input->view_angles() };
         qangle new_angles{ src_angles };
 
-        float closest_fov{ std::numeric_limits<float>::max() };
+        float closest_fov{ cfg.fov };
+        qangle best_angle{};
+
         for (std::int32_t i{ 1 }; i <= 64; i++) {
             const auto player{ cs2::CGameEntitySystem::get()->get_entity<cs2::CCSPlayerController>(i) };
-            if (!player or !player->is_alive() or player == local_player) {
+            if (!player || !player->is_alive() || player == local_player)
                 continue;
-            }
 
-            if (player->team_number() == local_player->team_number()) {
+            if (player->team_number() == local_player->team_number())
                 continue;
-            }
 
             const auto player_pawn{ player->get_pawn() };
-            if (!player_pawn or player_pawn->is_dormant()) {
+            if (!player_pawn || player_pawn->is_dormant())
                 continue;
+
+            const qangle dst_angle = calc_angle(local_pawn->eye_origin(), player_pawn->eye_origin());
+            const qangle delta{ dst_angle.x - src_angles.x, dst_angle.y - src_angles.y };
+            const float current_fov = std::hypot(delta.x, delta.y);
+
+            if (current_fov < closest_fov) {
+                closest_fov = current_fov;
+                best_angle = dst_angle;
             }
+        }
 
-            dst_angles = calc_angle(local_pawn->eye_origin(), player_pawn->eye_origin());
-            const qangle delta_angles{
-                dst_angles.x - src_angles.x,
-                dst_angles.y - src_angles.y
-            };
-
-            if (std::abs(delta_angles.x) <= cfg.fov
-                && std::abs(delta_angles.y) <= cfg.fov
-                && std::abs(delta_angles.y) < closest_fov) {
-
-                closest_fov = std::abs(dst_angles.y - src_angles.y);
-
-                const auto change{ ImGui::GetIO().DeltaTime * cfg.dps };
-
-                new_angles.x = std::clamp(
-                    src_angles.x + (delta_angles.x > 0.0f ? change : -change),
-                    std::min(src_angles.x, dst_angles.x),
-                    std::max(src_angles.x, dst_angles.x)
-                );
-
-                new_angles.y = std::clamp(
-                    src_angles.y + (delta_angles.y > 0.0f ? change : -change),
-                    std::min(src_angles.y, dst_angles.y),
-                    std::max(src_angles.y, dst_angles.y)
-                );
-            }
+        if (closest_fov < cfg.fov) {
+            const float factor = 1.0f / cfg.smoothing;
+            new_angles.x = src_angles.x + (best_angle.x - src_angles.x) * factor;
+            new_angles.y = src_angles.y + (best_angle.y - src_angles.y) * factor;
         }
 
         new_angles.x = std::clamp(new_angles.x, -89.0f, 89.0f);
         new_angles.y = std::clamp(new_angles.y, -189.0f, 189.0f);
-        input->set_view_angles(new_angles);
 
+        input->set_view_angles(new_angles);
         return get().m_create_move(input, a2, a3);
     }
 
