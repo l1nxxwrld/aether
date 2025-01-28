@@ -1,4 +1,3 @@
-#include <cassert>
 #include <Windows.h>
 #include <MinHook.h>
 #include <imgui.h>
@@ -17,6 +16,7 @@
 #include "config/config.hpp"
 #include "context.hpp"
 
+
 namespace aether {
 	context& context::get() {
 		static context instance;
@@ -30,22 +30,51 @@ namespace aether {
 
 		g_memory = std::make_unique<memory_mgr>();
 
-		assert(g_memory->init());
+		if (!g_memory->init()) {
+			return false;
+		}
 
 		g_interfaces = std::make_unique<interface_mgr>();
 		m_cfg = std::make_unique<config>(*this);
 		m_ui = std::make_unique<ui_manager>(*this);
 		m_scripts = std::make_unique<script_mgr>();
 
-		assert(MH_Initialize() == MH_OK);
-		assert(MH_CreateHook(g_memory->f_apply_input_stack, &apply_input_stack, reinterpret_cast<void**>(&m_apply_input_stack)) == MH_OK);
+		if (MH_Initialize() != MH_OK) {
+			return false;
+		}
+
+		if (MH_CreateHook(g_memory->f_apply_input_stack, &apply_input_stack, reinterpret_cast<void**>(&m_apply_input_stack)) != MH_OK) {
+			return false;
+		}
 
 		m_create_move = vmt_method::from_class(*g_memory->p_csgo_input, 21).exchange(&create_move);
 
-		assert(MH_EnableHook(MH_ALL_HOOKS) == MH_OK);
-		assert(init_ui());
-		assert(m_scripts->init());
+		if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
+			return false;
+		}
 
+		const auto render_device{ cs2::CRenderDeviceDx11::get() };
+		const auto swap_chain{ render_device->get_swap_chain() };
+		const auto d3d11_swap_chain{ swap_chain->get_d3d11_swap_chain() };
+		const auto window_handle{ swap_chain->get_window_handle() };
+
+		if (!init_ui(
+			window_handle, d3d11_swap_chain,
+			render_device->get_d3d11_device(),
+			render_device->get_d3d11_device_context())) {
+
+			return false;
+		}
+
+		m_wndproc = SetWindowLongPtrA(window_handle, GWLP_WNDPROC, reinterpret_cast<std::intptr_t>(&wndproc));
+		m_present = vmt_method::from_class(d3d11_swap_chain, 8).exchange(&present);
+		m_resize_buffers = vmt_method::from_class(d3d11_swap_chain, 13).exchange(&resize_buffers);
+
+		if (!m_scripts->init()) {
+			return false;
+		}
+
+		m_initialized = true;
 		return true;
 	}
 
@@ -61,8 +90,8 @@ namespace aether {
 		const auto d3d11_swap_chain{ swap_chain->get_d3d11_swap_chain() };
 		const auto window_handle{ swap_chain->get_window_handle() };
 
-		assert(MH_DisableHook(MH_ALL_HOOKS) == MH_OK);
-		assert(MH_Uninitialize() == MH_OK);
+		MH_DisableHook(MH_ALL_HOOKS);
+		MH_Uninitialize();
 
 		m_ui->uninit();
 
@@ -98,11 +127,11 @@ namespace aether {
 		return m_cfg;
 	}
 
-	bool context::init_ui() {
-		const auto render_device{ cs2::CRenderDeviceDx11::get() };
-		const auto swap_chain{ render_device->get_swap_chain() };
-		const auto d3d11_swap_chain{ swap_chain->get_d3d11_swap_chain() };
-		const auto window_handle{ swap_chain->get_window_handle() };
+	bool context::init_ui(
+		HWND window_handle,
+		IDXGISwapChain* swap_chain,
+		ID3D11Device* device,
+		ID3D11DeviceContext* device_context) {
 
 		ImGui::CreateContext();
 
@@ -110,7 +139,7 @@ namespace aether {
 			return false;
 		}
 
-		if (!ImGui_ImplDX11_Init(render_device->get_d3d11_device(), render_device->get_d3d11_device_context())) {
+		if (!ImGui_ImplDX11_Init(device, device_context)) {
 			ImGui_ImplWin32_Shutdown();
 			return false;
 		}
@@ -128,13 +157,13 @@ namespace aether {
 		}
 
 		ID3D11Texture2D* back_buffer{ nullptr };
-		if (FAILED(d3d11_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer)))) {
+		if (FAILED(swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer)))) {
 			ImGui_ImplWin32_Shutdown();
 			ImGui_ImplDX11_Shutdown();
 			return false;
 		}
 
-		if (FAILED(render_device->get_d3d11_device()->CreateRenderTargetView(back_buffer, nullptr, &m_render_target_view))) {
+		if (FAILED(device->CreateRenderTargetView(back_buffer, nullptr, &m_render_target_view))) {
 			ImGui_ImplWin32_Shutdown();
 			ImGui_ImplDX11_Shutdown();
 			back_buffer->Release();
@@ -143,11 +172,6 @@ namespace aether {
 
 		back_buffer->Release();
 
-		m_wndproc = SetWindowLongPtrA(window_handle, GWLP_WNDPROC, reinterpret_cast<std::intptr_t>(&wndproc));
-		m_present = vmt_method::from_class(d3d11_swap_chain, 8).exchange(&present);
-		m_resize_buffers = vmt_method::from_class(d3d11_swap_chain, 13).exchange(&resize_buffers);
-
-		m_initialized = true;
 		return true;
 	}
 
@@ -155,7 +179,6 @@ namespace aether {
 		this->uninit();
 	}
 
-#ifdef _DEBUG
 	static std::uint32_t init_thread(HMODULE module_base) {
 
 		if (!context::get().init()) {
@@ -170,7 +193,6 @@ namespace aether {
 
 		FreeLibraryAndExitThread(module_base, EXIT_SUCCESS);
 	}
-#endif
 }
 
 std::uint32_t __stdcall DllMain(
@@ -180,7 +202,6 @@ std::uint32_t __stdcall DllMain(
 ) {
 	if (reason == DLL_PROCESS_ATTACH) {
 
-#ifdef _DEBUG
 		const auto thread_handle{ CreateThread(
 			nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(aether::init_thread),
 			reinterpret_cast<LPVOID>(module_base), 0, nullptr
@@ -192,11 +213,6 @@ std::uint32_t __stdcall DllMain(
 		}
 
 		CloseHandle(thread_handle);
-#else
-		if (!aether::context::get().init()) {
-			return FALSE;
-		}
-#endif
 	}
 
 	return TRUE;

@@ -86,7 +86,7 @@ namespace aether {
 				}
 			}
 			return result;
-			});
+		});
 
 		table.new_usertype<qangle>("qangle",
 			sol::constructors<qangle(), qangle(float x, float y)>(),
@@ -144,6 +144,24 @@ namespace aether {
 			"get", cs2::CSchemaSystem::get,
 			"address", [](const cs2::CSchemaSystem* sys) { return reinterpret_cast<std::uintptr_t>(sys); }
 		);
+
+		auto ui_table{ table["ui"].get_or_create<sol::table>() };
+		
+		ui_table.set_function("is_open", [] {
+			return context::get().ui()->is_open();
+		});
+
+		ui_table.set_function("set_open", [](bool open) {
+			return context::get().ui()->set_open(open);
+		});
+
+		ui_table.set_function("show_input_stack_system", [] {
+			return context::get().ui()->config().show_input_stack_system = true;
+		});
+
+		ui_table.set_function("hide_input_stack_system", [] {
+			return context::get().ui()->config().show_input_stack_system = false;
+		});
 
 		return true;
 	}

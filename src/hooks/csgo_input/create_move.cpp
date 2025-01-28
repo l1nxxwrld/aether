@@ -12,21 +12,20 @@
 #include "../../context.hpp"
 
 namespace aether {
-    static constexpr float rad_to_deg(const float rad);
-    static constexpr float deg_to_rad(const float rad);
     static qangle calc_angle(const vec3& src, const vec3& dst);
 
     bool __fastcall context::create_move(cs2::CCSGOInput* input, std::int32_t a2, std::int64_t a3) {
 
-        auto& cfg{ *get().cfg()->aimbot };
+        auto& cfg{ *context::get().cfg()->aimbot };
         if (!cfg.enabled) {
-            return get().m_create_move(input, a2, a3);
+            return context::get().m_create_move(input, a2, a3);
         }
 
         const auto local_player{ cs2::CCSPlayerController::get_local_player() };
         const auto local_pawn{ local_player->get_pawn() };
 
         const auto& src_angles{ input->view_angles() };
+        qangle dst_angles{ src_angles };
         qangle new_angles{ src_angles };
 
         float closest_fov{ std::numeric_limits<float>::max() };
@@ -45,7 +44,7 @@ namespace aether {
                 continue;
             }
 
-            const auto dst_angles{ calc_angle(local_pawn->eye_origin(), player_pawn->eye_origin()) };
+            dst_angles = calc_angle(local_pawn->eye_origin(), player_pawn->eye_origin());
             const qangle delta_angles{
                 dst_angles.x - src_angles.x,
                 dst_angles.y - src_angles.y
@@ -78,14 +77,6 @@ namespace aether {
         input->set_view_angles(new_angles);
 
         return get().m_create_move(input, a2, a3);
-    }
-
-    constexpr float rad_to_deg(const float rad) {
-        return rad * (180.0f / std::numbers::pi_v<float>);
-    }
-
-    constexpr float deg_to_rad(const float rad) {
-        return rad * (std::numbers::pi_v<float> / 180.0f);
     }
 
     qangle calc_angle(const vec3& src, const vec3& dst) {

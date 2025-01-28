@@ -37,6 +37,12 @@ namespace aether::cs2 {
 		);
 	}
 
+	const qangle& C_CSPlayerPawn::aim_punch_angle() const {
+		return *reinterpret_cast<qangle*>(
+			reinterpret_cast<std::uintptr_t>(this) + 0x1584
+		);
+	}
+
 	C_CSWeaponBaseGun* C_CSPlayerPawn::current_weapon() const {
 		return *reinterpret_cast<C_CSWeaponBaseGun**>(
 			reinterpret_cast<std::uintptr_t>(this) + 0x1C38

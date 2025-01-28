@@ -1,4 +1,6 @@
 #include <imgui.h>
+#include <format>
+#include "../../cs2/client/player_pawn.hpp"
 #include "../../context.hpp"
 #include "../../ui/ui_manager.hpp"
 #include "../../config/config.hpp"
@@ -11,17 +13,21 @@ namespace aether {
         auto& ui{ *context::get().ui() };
         auto& cfg{ *context::get().cfg()->aimbot };
 
-        if (cfg.enabled && cfg.show_fov) {
-            ImGui::GetBackgroundDrawList()->AddCircleFilled(
-                ImGui::GetIO().DisplaySize * 0.5f,
-                ImGui::GetIO().DisplaySize.x * (cfg.fov / 90.0f) * 0.5f,
-                ImColor(120, 81, 169, 75), 100
-            );
-            ImGui::GetBackgroundDrawList()->AddCircle(
-                ImGui::GetIO().DisplaySize * 0.5f,
-                ImGui::GetIO().DisplaySize.x * (cfg.fov / 90.0f) * 0.5f,
-                ImColor(120, 81, 169, 200), 100, 1.0f
-            );
+        if (cfg.enabled) {
+            auto& draw_list{ *ImGui::GetBackgroundDrawList() };
+            if (cfg.show_fov) {
+                draw_list.AddCircleFilled(
+                    ImGui::GetIO().DisplaySize * 0.5f,
+                    ImGui::GetIO().DisplaySize.x * (cfg.fov / 90.0f) * 0.5f,
+                    ImColor(120, 81, 169, 75), 100
+                );
+
+                draw_list.AddCircle(
+                    ImGui::GetIO().DisplaySize * 0.5f,
+                    ImGui::GetIO().DisplaySize.x * (cfg.fov / 90.0f) * 0.5f,
+                    ImColor(120, 81, 169, 200), 100, 1.0f
+                );
+            }
         }
 
         if (!ui.is_open()) {
@@ -34,7 +40,7 @@ namespace aether {
             ImGui::Checkbox("Enabled", &cfg.enabled);
             ImGui::Checkbox("Show FOV", &cfg.show_fov);
             ImGui::SliderFloat("FOV", &cfg.fov, 1.0f, 90.0f, "%.1f");
-            ImGui::SliderFloat("DPS", &cfg.dps, 0.0f, 25.0f, "%.0f");
+            ImGui::SliderFloat("DPS", &cfg.dps, 0.0f, 25.0f, "%.1f");
         }
         ImGui::End();
 	}

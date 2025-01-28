@@ -19,6 +19,7 @@ namespace aether::cs2 {
         const vec3& abs_origin() const;
         const vec3& eye_origin() const;
         const vec3& view_direction() const;
+        const qangle& aim_punch_angle() const;
         C_CSWeaponBaseGun* current_weapon() const;
 
         EntitySpottedState_t& spotted_state();

@@ -17,7 +17,8 @@ namespace aether {
         bool show_editor{ true };
         bool show_aimbot_view{ true };
         bool show_esp_view{ true };
-        bool show_input_system{ false };
+
+        bool show_input_stack_system{ false };
     };
 
     class ui_manager {

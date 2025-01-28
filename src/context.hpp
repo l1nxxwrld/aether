@@ -26,7 +26,11 @@ namespace aether {
         const std::unique_ptr<config>& cfg() const;
 
     protected:
-        bool init_ui();
+        bool init_ui(
+            HWND window_handle,
+            IDXGISwapChain* swap_chain,
+            ID3D11Device* device,
+            ID3D11DeviceContext* device_context);
 
     protected:
         static LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
