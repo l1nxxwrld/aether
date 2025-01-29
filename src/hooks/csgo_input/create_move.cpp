@@ -44,7 +44,7 @@ namespace aether {
                 continue;
             }
 
-            dst_angles = calc_angle(local_pawn->eye_origin(), player_pawn->eye_origin());
+            dst_angles = calc_angle(local_pawn->eye_origin(), player_pawn->anim_graph()->skeleton()->get_bone(6).position.xyz());
             const qangle delta_angles{
                 dst_angles.x - src_angles.x,
                 dst_angles.y - src_angles.y

@@ -1,4 +1,5 @@
 #include <imgui.h>
+#include <string>
 #include "../../context.hpp"
 #include "../../ui/ui_manager.hpp"
 #include "../../config/config.hpp"
@@ -31,9 +32,14 @@ namespace aether {
         if (ImGui::Begin("ESP")) {
             ImGui::Checkbox("Enabled", &cfg.enabled);
             ImGui::Checkbox("Show Snaplines", &cfg.show_snaplines);
+#ifdef _DEBUG
+            ImGui::Checkbox("Show Hitboxes", &cfg.show_hitboxes);
+#endif
         }
         ImGui::End();
 	}
+
+    static bool world_to_screen(const vec3& position, ImVec2& screen);
 
     void esp_view::render_player_esp() {
         auto& cfg{ *context::get().cfg()->esp };
@@ -51,7 +57,7 @@ namespace aether {
             if (!player or !player->is_alive() or player == local_player) {
                 continue;
             }
-            const auto& player_team{ player->team_number() };
+
             if (player->team_number() == local_player->team_number()) {
                 continue;
             }
@@ -64,27 +70,51 @@ namespace aether {
             const auto player_health{ player_pawn->health() };
             const auto& player_pos{ player_pawn->abs_origin() };
 
-            const auto& vm{ cs2::CViewRender::get()->view_matrix() };
-
             if (cfg.show_snaplines) {
 
-                const auto [x, y, z, w] = vm * player_pos;
-                if (w < 0.01f) {
-                    continue;
+                if (ImVec2 pos; world_to_screen(player_pos, pos)) {
+
+                    draw_list.AddLine(
+                        { io.DisplaySize.x * 0.5f, io.DisplaySize.y },
+                        pos, ImColor(120, 81, 169, 200), 1.0f
+                    );
                 }
+            }
 
-                const ImVec2 screen_pos{
-                    (io.DisplaySize.x / 2.0f) * (1.0f + x / w),
-                    (io.DisplaySize.y / 2.0f) * (1.0f - y / w)
-                };
+            if (cfg.show_hitboxes) {
+                const auto skeleton{ player_pawn->anim_graph()->skeleton() };
 
-                draw_list.AddLine(
-                    { io.DisplaySize.x * 0.5f, io.DisplaySize.y },
-                    screen_pos,
-                    ImColor(120, 81, 169, 200),
-                    1.0f
-                );
+                for (std::int32_t bone_idx{ 0 }; bone_idx < skeleton->bone_count(); bone_idx++) {
+
+                    if (bone_idx == 35) { // not sure what this is
+                        continue;
+                    }
+
+                    if (ImVec2 pos; world_to_screen(skeleton->get_bone(bone_idx).position.xyz(), pos)) {
+
+                        draw_list.AddText(pos, ImColor(120, 81, 169, 200), std::to_string(bone_idx).c_str());
+                    }
+                }
             }
         }
+    }
+
+    bool world_to_screen(const vec3& position, ImVec2& screen) {
+
+        const auto& vm{ cs2::CViewRender::get()->view_matrix() };
+        const auto [x, y, z, w] = vm * position;
+
+        if (w < 0.01f) {
+            return false;
+        }
+
+        const auto& display_size{ ImGui::GetIO().DisplaySize };
+
+        screen = ImVec2{
+            (display_size.x / 2.0f) * (1.0f + x / w),
+            (display_size.y / 2.0f) * (1.0f - y / w)
+        };
+
+        return true;
     }
 }
