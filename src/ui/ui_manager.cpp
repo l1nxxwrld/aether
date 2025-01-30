@@ -44,7 +44,7 @@ namespace aether {
         );
 
         m_aimbot_view = std::make_unique<aimbot_view>();
-        m_esp_view = std::make_unique<esp_view>();
+        m_esp_view = std::make_unique<esp_view>(m_fonts.roboto_regular);
 
         m_ctx.scripts()->add_script((m_editor_script = std::make_shared<lua_script>()));
 

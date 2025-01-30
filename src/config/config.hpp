@@ -17,8 +17,9 @@ namespace aether {
 	public:
 		bool enabled{ false };
 		bool show_snaplines{ false };
-		bool show_hitboxes{ false };
+		bool show_name{ false };
 		bool show_box_2d{ false };
+		bool show_hitboxes{ false };
 	};
 
 	class config {

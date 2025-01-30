@@ -12,7 +12,8 @@
 #include "esp_view.hpp"
 
 namespace aether {
-	esp_view::esp_view() {}
+	esp_view::esp_view(ImFont* esp_font)
+        : m_esp_font(esp_font) {}
 
 	void esp_view::render() {
         auto& ui{ *context::get().ui() };
@@ -30,10 +31,12 @@ namespace aether {
         if (ImGui::Begin("ESP")) {
             ImGui::Checkbox("Enabled", &cfg.enabled);
             ImGui::Checkbox("Show Snaplines", &cfg.show_snaplines);
+            ImGui::Checkbox("Show Name", &cfg.show_name);
+            ImGui::Checkbox("Show Box 2D", &cfg.show_box_2d);
+
 #ifdef _DEBUG
             ImGui::Checkbox("Show Hitboxes", &cfg.show_hitboxes);
 #endif
-            ImGui::Checkbox("Show Box 2D", &cfg.show_box_2d);
         }
         ImGui::End();
 	}
@@ -73,7 +76,7 @@ namespace aether {
 
             draw_snapline(player_pawn);
             draw_hitboxes(player_pawn);
-            draw_bounding_box(player_pawn);
+            draw_bounding_box(player, player_pawn);
         }
     }
 
@@ -114,9 +117,9 @@ namespace aether {
         }
     }
 
-    void esp_view::draw_bounding_box(cs2::C_CSPlayerPawn* player_pawn) {
+    void esp_view::draw_bounding_box(cs2::CCSPlayerController* player, cs2::C_CSPlayerPawn* player_pawn) {
         auto& cfg{ *context::get().cfg()->esp };
-        if (!cfg.show_box_2d) {
+        if (!cfg.show_box_2d && !cfg.show_name) {
             return;
         }
 
@@ -168,8 +171,21 @@ namespace aether {
 
         auto& draw_list{ *ImGui::GetBackgroundDrawList() };
 
-        draw_list.AddRect({ left, top }, { right, bottom }, ImColor(10, 10, 10, 200), 0.0f, ImDrawFlags_RoundCornersNone, 3.0f);
-        draw_list.AddRect({ left, top }, { right, bottom }, ImColor(120, 81, 169, 200), 0.0f, ImDrawFlags_RoundCornersNone, 1.0f);
+        if (cfg.show_box_2d) {
+            draw_list.AddRect({ left, top }, { right, bottom }, ImColor(10, 10, 10, 200), 0.0f, ImDrawFlags_RoundCornersNone, 3.0f);
+            draw_list.AddRect({ left, top }, { right, bottom }, ImColor(120, 81, 169, 200), 0.0f, ImDrawFlags_RoundCornersNone, 1.0f);
+        }
+
+        if (cfg.show_name) {
+            ImGui::PushFont(m_esp_font);
+
+            const auto name{ player->get_name() };
+            const auto name_size{ ImGui::CalcTextSize(name) };
+
+            draw_list.AddText({ left + (right - left) * 0.5f - name_size.x * 0.5f, bottom - name_size.y - 10.0f}, ImColor(255, 255, 255, 200), name);
+
+            ImGui::PopFont();
+        }
     }
 
     bool world_to_screen(const vec3& position, ImVec2& screen) {
