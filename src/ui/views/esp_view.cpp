@@ -79,7 +79,7 @@ namespace aether {
 
     void esp_view::draw_snapline(cs2::C_CSPlayerPawn* player_pawn) {
         auto& cfg{ *context::get().cfg()->esp };
-        if (cfg.show_snaplines) {
+        if (!cfg.show_snaplines) {
             return;
         }
 
@@ -97,7 +97,7 @@ namespace aether {
 
     void esp_view::draw_hitboxes(cs2::C_CSPlayerPawn* player_pawn) {
         auto& cfg{ *context::get().cfg()->esp };
-        if (cfg.show_hitboxes) {
+        if (!cfg.show_hitboxes) {
             return;
         }
 
