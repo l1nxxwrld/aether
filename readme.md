@@ -4,7 +4,12 @@ Experimental Counter-Strike 2 cheat
 ## Features
 - Basic aimbot without visibility check
   - FOV constraint
-- Snapline ESP
+  - Speed
+- Player ESP
+  - Bounding Box
+  - Name
+  - Health
+  - Snapline
 - [Lua scripting system](./src/scripts)
 
 ## Building
