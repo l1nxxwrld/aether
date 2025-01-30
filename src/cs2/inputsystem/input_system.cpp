@@ -25,4 +25,8 @@ namespace aether::cs2 {
     void CInputSystem::set_relative_mouse_mode(bool mode) {
         return (*reinterpret_cast<std::add_pointer_t<void __stdcall(const CInputSystem*, bool)>*const*>(this))[76](this, mode);
     }
+
+    void CInputSystem::set_cursor_visibility(void* a1, bool mode) {
+        return (*reinterpret_cast<std::add_pointer_t<void __stdcall(const CInputSystem*, void*, bool)>*const*>(this))[58](this, a1, mode);
+    }
 }

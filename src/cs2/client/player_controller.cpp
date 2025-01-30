@@ -7,6 +7,20 @@ namespace aether::cs2 {
         return *g_memory->p_local_player_controller;
     }
 
+    const char* CCSPlayerController::get_csgoid() const {
+        return *reinterpret_cast<const char**>(
+            reinterpret_cast<std::uintptr_t>(this) +
+            0x748
+        );
+    }
+
+    const char* CCSPlayerController::get_name() const {
+        return *reinterpret_cast<const char**>(
+            reinterpret_cast<std::uintptr_t>(this) +
+            0x770
+        );
+    }
+
     C_CSPlayerPawn* CCSPlayerController::get_pawn() const {
         return CGameEntitySystem::get()
             ->get_entity<C_CSPlayerPawn>(this->pawn_index());
