@@ -13,11 +13,7 @@ namespace aether {
 		void render();
 
 	protected:
-		void render_player_esp();
-
-		void draw_snapline(cs2::C_CSPlayerPawn* player_pawn);
-		void draw_hitboxes(cs2::C_CSPlayerPawn* player_pawn);
-		void draw_bounding_box(cs2::CCSPlayerController* player, cs2::C_CSPlayerPawn* player_pawn);
+		void draw_player_esp(cs2::CCSPlayerController* player, cs2::C_CSPlayerPawn* player_pawn);
 
 	protected:
 		ImFont* m_esp_font;

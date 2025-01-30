@@ -19,6 +19,7 @@ namespace aether {
 		bool show_snaplines{ false };
 		bool show_name{ false };
 		bool show_box_2d{ false };
+		bool show_health_bar{ false };
 		bool show_hitboxes{ false };
 	};
 
