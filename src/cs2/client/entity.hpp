@@ -12,12 +12,14 @@ namespace aether::cs2 {
 
     class CBodyComponentBaseAnimGraph;
     class CSkeletonInstance;
+    class CCollisionProperty;
 
     class C_BaseEntity {
     public:
         CBodyComponentBaseAnimGraph* anim_graph() const;
         const char* get_entity_type_name() const;
         bool is_dormant() const;
+        CCollisionProperty* collision_property() const;
         std::int32_t health() const;
         std::uint32_t flags() const;
         e_team_number team_number() const;
@@ -44,5 +46,12 @@ namespace aether::cs2 {
 
         std::int32_t bone_count() const;
         const bone& get_bone(std::int32_t index) const;
+    };
+
+    // C_BaseModelEntity::NetworkVar_m_Collision : CCollisionProperty
+    class CCollisionProperty {
+    public:
+        const vec3& mins() const;
+        const vec3& maxs() const;
     };
 }

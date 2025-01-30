@@ -24,6 +24,13 @@ namespace aether::cs2 {
         );
     }
 
+    CCollisionProperty* C_BaseEntity::collision_property() const {
+        return *reinterpret_cast<CCollisionProperty**>(
+            reinterpret_cast<std::uintptr_t>(this) +
+            0x338
+        );
+    }
+
     std::int32_t C_BaseEntity::health() const {
         return *reinterpret_cast<std::int32_t*>(
             reinterpret_cast<std::uintptr_t>(this) +
@@ -68,5 +75,17 @@ namespace aether::cs2 {
             reinterpret_cast<std::uintptr_t>(this) +
             0x1F0 // CModelState + 0x80
         ))[index];
+    }
+
+    const vec3& CCollisionProperty::mins() const {
+        return *reinterpret_cast<vec3*>(
+            reinterpret_cast<std::uintptr_t>(this) + 0x40
+        );
+    }
+
+    const vec3& CCollisionProperty::maxs() const {
+        return *reinterpret_cast<vec3*>(
+            reinterpret_cast<std::uintptr_t>(this) + 0x4C
+        );
     }
 }

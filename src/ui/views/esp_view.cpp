@@ -1,5 +1,6 @@
 #include <imgui.h>
 #include <string>
+#include <array>
 #include "../../context.hpp"
 #include "../../ui/ui_manager.hpp"
 #include "../../config/config.hpp"
@@ -17,10 +18,7 @@ namespace aether {
         auto& ui{ *context::get().ui() };
         auto& cfg{ *context::get().cfg()->esp };
 
-        if (cfg.enabled) {
-
-            render_player_esp();
-        }
+        render_player_esp();
 
         if (!ui.is_open()) {
             return;
@@ -35,6 +33,7 @@ namespace aether {
 #ifdef _DEBUG
             ImGui::Checkbox("Show Hitboxes", &cfg.show_hitboxes);
 #endif
+            ImGui::Checkbox("Show Box 2D", &cfg.show_box_2d);
         }
         ImGui::End();
 	}
@@ -42,19 +41,24 @@ namespace aether {
     static bool world_to_screen(const vec3& position, ImVec2& screen);
 
     void esp_view::render_player_esp() {
-        auto& cfg{ *context::get().cfg()->esp };
 
-        auto& draw_list{ *ImGui::GetBackgroundDrawList() };
-        const auto& io{ ImGui::GetIO() };
+        auto& cfg{ *context::get().cfg()->esp };
+        if (!cfg.enabled) {
+            return;
+        }
 
         const auto local_player{ cs2::CCSPlayerController::get_local_player() };
-        if (!local_player) {
+        if (!local_player or !local_player->get_pawn()) {
             return;
         }
 
         for (std::size_t i{ 1 }; i <= 64; i++) {
+
             const auto player{ cs2::CGameEntitySystem::get()->get_entity<cs2::CCSPlayerController>(i) };
-            if (!player or !player->is_alive() or player == local_player) {
+
+            if (!player or !player->is_alive() or player == local_player or
+                std::strcmp(player->get_entity_type_name(), "cs_player_controller") != 0) {
+
                 continue;
             }
 
@@ -67,36 +71,105 @@ namespace aether {
                 continue;
             }
 
-            const auto player_health{ player_pawn->health() };
-            const auto& player_pos{ player_pawn->abs_origin() };
+            draw_snapline(player_pawn);
+            draw_hitboxes(player_pawn);
+            draw_bounding_box(player_pawn);
+        }
+    }
 
-            if (cfg.show_snaplines) {
+    void esp_view::draw_snapline(cs2::C_CSPlayerPawn* player_pawn) {
+        auto& cfg{ *context::get().cfg()->esp };
+        if (cfg.show_snaplines) {
+            return;
+        }
 
-                if (ImVec2 pos; world_to_screen(player_pos, pos)) {
+        if (ImVec2 pos; world_to_screen(player_pawn->abs_origin(), pos)) {
 
-                    draw_list.AddLine(
-                        { io.DisplaySize.x * 0.5f, io.DisplaySize.y },
-                        pos, ImColor(120, 81, 169, 200), 1.0f
-                    );
-                }
-            }
+            auto& draw_list{ *ImGui::GetBackgroundDrawList() };
+            const auto& display_size{ ImGui::GetIO().DisplaySize };
 
-            if (cfg.show_hitboxes) {
-                const auto skeleton{ player_pawn->anim_graph()->skeleton() };
+            draw_list.AddLine(
+                { display_size.x * 0.5f, display_size.y },
+                pos, ImColor(120, 81, 169, 200), 1.0f
+            );
+        }
+    }
 
-                for (std::int32_t bone_idx{ 0 }; bone_idx < skeleton->bone_count(); bone_idx++) {
+    void esp_view::draw_hitboxes(cs2::C_CSPlayerPawn* player_pawn) {
+        auto& cfg{ *context::get().cfg()->esp };
+        if (cfg.show_hitboxes) {
+            return;
+        }
 
-                    if (bone_idx == 35) { // not sure what this is
-                        continue;
-                    }
+        const auto skeleton{ player_pawn->anim_graph()->skeleton() };
 
-                    if (ImVec2 pos; world_to_screen(skeleton->get_bone(bone_idx).position.xyz(), pos)) {
+        for (std::int32_t bone_idx{ 0 }; bone_idx < skeleton->bone_count(); bone_idx++) {
 
-                        draw_list.AddText(pos, ImColor(120, 81, 169, 200), std::to_string(bone_idx).c_str());
-                    }
-                }
+            if (ImVec2 pos; world_to_screen(skeleton->get_bone(bone_idx).position.xyz(), pos)) {
+
+                auto& draw_list{ *ImGui::GetBackgroundDrawList() };
+
+                draw_list.AddText(pos, ImColor(120, 81, 169, 200), std::to_string(bone_idx).c_str());
             }
         }
+    }
+
+    void esp_view::draw_bounding_box(cs2::C_CSPlayerPawn* player_pawn) {
+        auto& cfg{ *context::get().cfg()->esp };
+        if (!cfg.show_box_2d) {
+            return;
+        }
+
+        const auto collision_property{ player_pawn->collision_property() };
+        const auto min{ player_pawn->abs_origin() + collision_property->mins() };
+        const auto max{ player_pawn->abs_origin() + collision_property->maxs() };
+
+        std::array<vec3, 8> points{
+            vec3{ min.x, min.y, min.z },
+            vec3{ min.x, max.y, min.z },
+            vec3{ max.x, max.y, min.z },
+            vec3{ max.x, min.y, min.z },
+            vec3{ max.x, max.y, max.z },
+            vec3{ min.x, max.y, max.z },
+            vec3{ min.x, min.y, max.z },
+            vec3{ max.x, min.y, max.z },
+        };
+
+        std::array<ImVec2, 8> screen_points;
+        for (std::size_t i{ 0 }; i < 8; i++) {
+            if (!world_to_screen(points[i], screen_points[i])) {
+                return;
+            }
+        }
+
+        float left{ screen_points[3].x };
+        float top{ screen_points[3].y };
+        float right{ screen_points[3].x };
+        float bottom{ screen_points[3].y };
+
+        for (std::size_t i{ 1 }; i < 8; i++) {
+
+            if (left > screen_points[i].x) {
+                left = screen_points[i].x;
+            }
+
+            if (top < screen_points[i].y) {
+                top = screen_points[i].y;
+            }
+
+            if (right < screen_points[i].x) {
+                right = screen_points[i].x;
+            }
+
+            if (bottom > screen_points[i].y) {
+                bottom = screen_points[i].y;
+            }
+        }
+
+        auto& draw_list{ *ImGui::GetBackgroundDrawList() };
+
+        draw_list.AddRect({ left, top }, { right, bottom }, ImColor(10, 10, 10, 200), 0.0f, ImDrawFlags_RoundCornersNone, 3.0f);
+        draw_list.AddRect({ left, top }, { right, bottom }, ImColor(120, 81, 169, 200), 0.0f, ImDrawFlags_RoundCornersNone, 1.0f);
     }
 
     bool world_to_screen(const vec3& position, ImVec2& screen) {

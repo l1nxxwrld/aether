@@ -64,6 +64,9 @@ namespace aether {
             this->set_open(!this->is_open());
         }
 
+        ImGui::GetIO().MouseDrawCursor = false;
+        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+
         ImGui::PushFont(m_fonts.roboto_regular);
 
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 225.0f / 255.0f);
@@ -216,7 +219,8 @@ namespace aether {
 
     void ui_manager::set_open(bool open) {
         m_is_open = open;
-        cs2::CInputStackSystem::get()->apply(0xffff'ffff);
+
+        cs2::CInputStackSystem::get()->apply(8);
     }
 
     const std::unique_ptr<ui_code_editor>& ui_manager::editor() {
