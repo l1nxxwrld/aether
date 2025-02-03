@@ -1,19 +1,20 @@
 #pragma once
 #include <memory>
 #include "../math/qangle.hpp"
+#include "../math/vec2.hpp"
 
 namespace aether {
 	class context;
 
-	class aimbot_state {
+	class aimbot_config {
 	public:
 		bool enabled{ false };
 		bool show_fov{ false };
 		float fov{ 3.0f };
-		float dps{ 10.0f };
+		float factor{ 0.1f };
 	};
 
-	class esp_state {
+	class esp_config {
 	public:
 		bool enabled{ false };
 		bool show_snaplines{ false };
@@ -25,12 +26,9 @@ namespace aether {
 
 	class config {
 	public:
-		config(context& cfg);
+		config() = default;
 
-		std::unique_ptr<aimbot_state> aimbot;
-		std::unique_ptr<esp_state> esp;
-
-	protected:
-		context& m_cfg;
+		aimbot_config aimbot;
+		esp_config esp;
 	};
 }

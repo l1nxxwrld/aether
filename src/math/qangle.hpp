@@ -1,5 +1,7 @@
 #pragma once
+#include <cmath>
 #include <numbers>
+#include <algorithm>
 
 namespace aether {
     class qangle {
@@ -20,6 +22,48 @@ namespace aether {
 
         constexpr float roll() const {
             return this->z;
+        }
+
+        inline void normalize() {
+            this->x = std::clamp(this->x, -89.0f, 89.0f);
+            this->y = std::remainder(this->y, 360.0f);
+            this->z = std::remainder(this->z, 360.0f);
+        }
+
+        inline qangle normalized() const {
+            qangle result{ *this };
+            result.normalize();
+            return result;
+        }
+
+        qangle operator+(const qangle& other) const {
+            return qangle{
+                this->x + other.x,
+                this->y + other.y,
+                this->z + other.z
+            };
+        }
+
+        qangle operator-(const qangle& other) const {
+            return qangle{
+                this->x - other.x,
+                this->y - other.y,
+                this->z - other.z
+            };
+        }
+
+        qangle& operator+=(const qangle& other) {
+            this->x += other.x;
+            this->y += other.y;
+            this->z += other.z;
+            return *this;
+        }
+
+        qangle& operator-=(const qangle& other) {
+            this->x -= other.x;
+            this->y -= other.y;
+            this->z -= other.z;
+            return *this;
         }
 
         float x, y, z;

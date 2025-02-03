@@ -23,7 +23,7 @@ namespace aether {
 
     class ui_manager {
     public:
-        ui_manager(context& ctx);
+        ui_manager();
         ~ui_manager();
 
         bool init();
@@ -41,7 +41,6 @@ namespace aether {
         const std::shared_ptr<lua_script>& editor_script();
 
     protected:
-        context& m_ctx;
         ui_config m_config;
         struct {
             ImFont* roboto_regular{ nullptr };

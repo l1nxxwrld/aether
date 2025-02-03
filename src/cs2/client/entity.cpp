@@ -1,3 +1,4 @@
+#include <string>
 #include "entity.hpp"
 
 namespace aether::cs2 {
@@ -15,6 +16,10 @@ namespace aether::cs2 {
                 0x10
             ) + 0x20
         );
+    }
+
+    bool C_BaseEntity::is_player_controller() const {
+        return std::strcmp(this->get_entity_type_name(), "cs_player_controller") == 0;
     }
 
     bool C_BaseEntity::is_dormant() const {

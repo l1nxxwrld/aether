@@ -24,9 +24,6 @@ namespace aether {
 	}
 
 	bool context::init() {
-		if (m_initialized) {
-			return false;
-		}
 
 		g_memory = std::make_unique<memory_mgr>();
 
@@ -35,8 +32,8 @@ namespace aether {
 		}
 
 		g_interfaces = std::make_unique<interface_mgr>();
-		m_cfg = std::make_unique<config>(*this);
-		m_ui = std::make_unique<ui_manager>(*this);
+		m_cfg = std::make_unique<config>();
+		m_ui = std::make_unique<ui_manager>();
 		m_scripts = std::make_unique<script_mgr>();
 
 		if (MH_Initialize() != MH_OK) {
@@ -74,16 +71,10 @@ namespace aether {
 			return false;
 		}
 
-		m_initialized = true;
 		return true;
 	}
 
 	bool context::uninit() {
-		if (!m_initialized) {
-			return false;
-		}
-
-		m_initialized = false;
 
 		const auto render_device{ cs2::CRenderDeviceDx11::get() };
 		const auto swap_chain{ render_device->get_swap_chain() };
@@ -108,7 +99,7 @@ namespace aether {
 	}
 
 	bool context::awaiting_shutdown() const {
-		return m_initialized && m_shutdown;
+		return m_shutdown;
 	}
 
 	void context::queue_shutdown() {
@@ -175,9 +166,8 @@ namespace aether {
 		return true;
 	}
 
-	context::~context() {
-		this->uninit();
-	}
+	context::context() = default;
+	context::~context() = default;
 
 	static std::uint32_t init_thread(HMODULE module_base) {
 

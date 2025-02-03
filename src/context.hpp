@@ -1,4 +1,5 @@
 #pragma once
+#include <mutex>
 #include <memory>
 #include <d3d11.h>
 
@@ -63,7 +64,6 @@ namespace aether {
         decltype(&apply_input_stack) m_apply_input_stack{ nullptr };
 
     protected:
-        bool m_initialized{ false };
         bool m_shutdown{ false };
 
         std::unique_ptr<ui_manager> m_ui;
@@ -73,7 +73,7 @@ namespace aether {
         ID3D11RenderTargetView* m_render_target_view{ nullptr };
 
     protected:
-        context() = default;
+        context();
         ~context();
     };
 }
