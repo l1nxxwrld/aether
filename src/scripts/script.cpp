@@ -8,6 +8,7 @@
 #include "../config/config.hpp"
 #include "../ui/ui_manager.hpp"
 #include "../ui/components/code_editor.hpp"
+#include "../math/vec2.hpp"
 #include "script.hpp"
 
 namespace aether {
@@ -37,7 +38,7 @@ namespace aether {
 			context::get().ui()->editor()->output_buffer() += text + "\n";
 		});
 		
-		table.set_function("clear", []() {
+		table.set_function("clear_output", []() {
 			context::get().ui()->editor()->output_buffer().clear();
 		});
 
@@ -65,6 +66,21 @@ namespace aether {
 			return false;
 		});
 
+		callbacks.set_function("clear", [this](const sol::variadic_args& args) {
+			if (args.size() == 0) {
+				m_on_pre_ui.clear();
+				m_on_post_ui.clear();
+			}
+			else if (args.size() == 1 && args.get_type() == sol::type::string) {
+				if (args.get<std::string>(0) == "pre_ui") {
+					m_on_pre_ui.clear();
+				}
+				else if (args.get<std::string>(0) == "post_ui") {
+					m_on_post_ui.clear();
+				}
+			}
+		});
+
 		auto mem{ table["memory"].get_or_create<sol::table>() };
 
 		mem.set_function("read_u8", [](std::uint64_t address) -> std::uint8_t { return *reinterpret_cast<std::uint8_t*>(address);  });
@@ -89,16 +105,42 @@ namespace aether {
 		});
 
 		table.new_usertype<qangle>("qangle",
-			sol::constructors<qangle(), qangle(float x, float y)>(),
+			sol::constructors<qangle(), qangle(float x, float y, float z)>(),
 			"x", &qangle::x,
-			"y", &qangle::y
+			"y", &qangle::y,
+			"z", &qangle::z
+		);
+
+		table.new_usertype<vec2>("vec2",
+			sol::constructors<vec2(), vec2(float x, float y)>(),
+			"x", &vec2::x,
+			"y", &vec2::y
 		);
 
 		table.new_usertype<vec3>("vec3",
-			sol::constructors<vec3(), vec3(float x, float y)>(),
+			sol::constructors<vec3(), vec3(float x, float y, float z)>(),
 			"x", &vec3::x,
 			"y", &vec3::y,
 			"z", &vec3::z
+		);
+
+		table.new_usertype<vec4>("vec4",
+			sol::constructors<vec4(), vec4(float x, float y, float z, float w)>(),
+			"x", &vec4::x,
+			"y", &vec4::y,
+			"z", &vec4::z,
+			"w", &vec4::w
+		);
+
+		table.new_usertype<cs2::CSkeletonInstance>("SkeletonInstance",
+			"bone_count", &cs2::CSkeletonInstance::bone_count,
+			"get_bone_position", [](cs2::CSkeletonInstance* skeleton, std::int32_t index) {
+				return skeleton->get_bone(index).position.xyz();
+			}
+		);
+
+		table.new_usertype<cs2::CBodyComponentBaseAnimGraph>("BodyComponentBaseAnimGraph",
+			"skeleton", &cs2::CBodyComponentBaseAnimGraph::skeleton
 		);
 
 		table.new_usertype<cs2::C_BaseEntity>("BaseEntity",
@@ -106,29 +148,43 @@ namespace aether {
 			"from_address", [](std::uintptr_t address) { return reinterpret_cast<cs2::C_BaseEntity*>(address); },
 			"as_player_pawn", [](cs2::C_BaseEntity* entity) { return reinterpret_cast<cs2::C_CSPlayerPawn*>(entity); },
 			"as_player_controller", [](cs2::C_BaseEntity* entity) { return reinterpret_cast<cs2::CCSPlayerController*>(entity); },
-			"entity_index", &cs2::C_CSPlayerPawn::entity_index,
-			"get_entity_type_name", &cs2::C_BaseEntity::get_entity_type_name
+			"anim_graph", &cs2::C_CSPlayerPawn::anim_graph,
+			"entity_type_name", &cs2::C_BaseEntity::get_entity_type_name,
+			"is_dormant", &cs2::C_BaseEntity::is_dormant,
+			"collision_property", &cs2::C_BaseEntity::collision_property,
+			"health", &cs2::C_BaseEntity::health,
+			"flags", &cs2::C_BaseEntity::flags,
+			"team_number", &cs2::C_BaseEntity::team_number,
+			"entity_index", &cs2::C_BaseEntity::entity_index
 		);
 
 		table.new_usertype<cs2::CCSPlayerController>("PlayerController",
-			"get_local", cs2::CCSPlayerController::get_local_player,
-			"base_player", [](cs2::CCSPlayerController* player) { return reinterpret_cast<cs2::C_BaseEntity*>(player); },
+			"get_local_player", cs2::CCSPlayerController::get_local_player,
+			"base_entity", [](cs2::CCSPlayerController* player) { return reinterpret_cast<cs2::C_BaseEntity*>(player); },
 			"address", [](const cs2::CCSPlayerController* player) { return reinterpret_cast<std::uintptr_t>(player); },
-			"get_pawn", [](const cs2::CCSPlayerController* player) { return reinterpret_cast<std::uintptr_t>(player->get_pawn()); },
-			"pawn_index", &cs2::CCSPlayerController::pawn_index
+			"pawn", [](const cs2::CCSPlayerController* player) { return reinterpret_cast<std::uintptr_t>(player->get_pawn()); },
+			"csgoid", &cs2::CCSPlayerController::get_csgoid,
+			"name", &cs2::CCSPlayerController::get_name,
+			"pawn_index", &cs2::CCSPlayerController::pawn_index,
+			"is_alive", &cs2::CCSPlayerController::is_alive
 		);
 
+		table.set_function("get_local_player", cs2::CCSPlayerController::get_local_player);
+
 		table.new_usertype<cs2::C_CSPlayerPawn>("PlayerPawn",
-			"get_local", cs2::C_CSPlayerPawn::get_local_player,
-			"base_player", [](cs2::CCSPlayerController* player) { return reinterpret_cast<cs2::C_BaseEntity*>(player); },
+			"base_entity", [](cs2::CCSPlayerController* player) { return reinterpret_cast<cs2::C_BaseEntity*>(player); },
 			"address", [](const cs2::C_CSPlayerPawn* pawn) { return reinterpret_cast<std::uintptr_t>(pawn); },
-			"get_name", &cs2::C_CSPlayerPawn::get_entity_type_name,
 			"view_angle", &cs2::C_CSPlayerPawn::view_angle,
 			"abs_origin", &cs2::C_CSPlayerPawn::abs_origin,
 			"eye_origin", &cs2::C_CSPlayerPawn::eye_origin,
 			"view_direction", &cs2::C_CSPlayerPawn::view_direction,
-			"current_weapon", &cs2::C_CSPlayerPawn::current_weapon
+			"current_weapon", &cs2::C_CSPlayerPawn::current_weapon,
+			"is_spotted", [](const cs2::C_CSPlayerPawn* pawn) {
+				return pawn->spotted_state().spotted;
+			}
 		);
+
+		table.set_function("get_local_pawn", cs2::C_CSPlayerPawn::get_local_player);
 
 		table.new_usertype<cs2::C_CSWeaponBaseGun>("Weapon",
 			"address", [](const cs2::C_CSWeaponBaseGun* wpn) { return reinterpret_cast<std::uintptr_t>(wpn); }
@@ -161,6 +217,15 @@ namespace aether {
 
 		ui_table.set_function("hide_input_stack_system", [] {
 			return context::get().ui()->config().show_input_stack_system = false;
+		});
+
+		ui_table.set_function("get_delta_time", [] {
+			return ImGui::GetIO().DeltaTime;
+		});
+
+		ui_table.set_function("get_delta_time", [] {
+			const auto& display_size{ ImGui::GetIO().DisplaySize };
+			return vec2{ display_size.x, display_size.y };
 		});
 
 		return true;

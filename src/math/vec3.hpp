@@ -1,11 +1,14 @@
 #pragma once
 #include <cmath>
-#include <xmmintrin.h>
+#include <numbers>
+#include "qangle.hpp"
 
 namespace aether {
     class vec3 {
     public:
-        constexpr vec3(float x = 0.0f, float y = 0.0f, float z = 0.0f)
+        constexpr vec3()
+            : x(0.0f), y(0.0f), z(0.0f) {}
+        constexpr vec3(float x, float y, float z)
             : x(x), y(y), z(z) {}
 
         inline vec3 operator*(const float value) const {
@@ -47,7 +50,7 @@ namespace aether {
         }
 
         inline float magnitude() const {
-            return std::sqrtf(
+            return std::sqrt(
                 this->x * this->x +
                 this->y * this->y +
                 this->z * this->z
@@ -69,6 +72,14 @@ namespace aether {
                 this->y - other.y,
                 this->z - other.z
             }.magnitude();
+        }
+
+        inline qangle angle_to(const vec3& dst) const {
+            const auto delta{ dst - *this };
+            return qangle{
+                rad_to_deg(-std::asin(delta.z / delta.magnitude())),
+                rad_to_deg(std::atan2(delta.y, delta.x))
+            };
         }
 
         float x, y, z;

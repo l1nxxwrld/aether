@@ -18,7 +18,7 @@ namespace aether {
 
 	void esp_view::render() {
         auto& ui{ *context::get().ui() };
-        auto& cfg{ *context::get().cfg()->esp };
+        auto& cfg{ context::get().cfg()->esp };
 
         if (ui.is_open()) {
             ImGui::SetNextWindowPos({ 375.0f, 100.0f }, ImGuiCond_Once);
@@ -64,7 +64,7 @@ namespace aether {
 
         if (cfg.enabled) {
             const auto local_player{ cs2::CCSPlayerController::get_local_player() };
-            if (!local_player or !local_player->get_pawn()) {
+            if (!local_player || !local_player->get_pawn()) {
                 return;
             }
 
@@ -72,9 +72,7 @@ namespace aether {
 
                 const auto player{ cs2::CGameEntitySystem::get()->get_entity<cs2::CCSPlayerController>(i) };
 
-                if (!player or !player->is_alive() or player == local_player or
-                    std::strcmp(player->get_entity_type_name(), "cs_player_controller") != 0) {
-
+                if (!player || !player->is_player_controller() || !player->is_alive() || player == local_player) {
                     continue;
                 }
 
@@ -95,7 +93,7 @@ namespace aether {
     static bool world_to_screen(const vec3& position, ImVec2& screen);
 
     void esp_view::draw_player_esp(cs2::CCSPlayerController* player, cs2::C_CSPlayerPawn* player_pawn) {
-        auto& cfg{ *context::get().cfg()->esp };
+        auto& cfg{ context::get().cfg()->esp };
 
         const auto collision_property{ player_pawn->collision_property() };
         const auto min{ player_pawn->abs_origin() + collision_property->mins() };

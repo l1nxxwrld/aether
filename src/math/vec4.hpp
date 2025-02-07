@@ -1,11 +1,12 @@
 #pragma once
-#include <xmmintrin.h>
 #include "vec3.hpp"
 
 namespace aether {
     class vec4 {
     public:
-        constexpr vec4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f)
+        constexpr vec4()
+            : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+        constexpr vec4(float x, float y, float z, float w)
             : x(x), y(y), z(z), w(w) {}
 
         inline const vec3& xyz() const {

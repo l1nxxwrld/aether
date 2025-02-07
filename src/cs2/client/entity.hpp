@@ -18,6 +18,7 @@ namespace aether::cs2 {
     public:
         CBodyComponentBaseAnimGraph* anim_graph() const;
         const char* get_entity_type_name() const;
+        bool is_player_controller() const;
         bool is_dormant() const;
         CCollisionProperty* collision_property() const;
         std::int32_t health() const;

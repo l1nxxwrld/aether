@@ -18,6 +18,7 @@ namespace aether {
 		virtual bool is_running() const = 0;
 
 		virtual void on_pre_ui() = 0;
+
 		virtual void on_post_ui() = 0;
 
 		virtual std::string submit(const std::string_view& code) = 0;

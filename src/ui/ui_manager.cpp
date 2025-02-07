@@ -18,10 +18,8 @@
 #include "ui_manager.hpp"
 
 namespace aether {
-    ui_manager::ui_manager(context& ctx)
-        : m_ctx(ctx) {}
-
-    ui_manager::~ui_manager() {}
+    ui_manager::ui_manager() = default;
+    ui_manager::~ui_manager() = default;
 
     bool ui_manager::init() {
 
@@ -46,7 +44,7 @@ namespace aether {
         m_aimbot_view = std::make_unique<aimbot_view>();
         m_esp_view = std::make_unique<esp_view>(m_fonts.roboto_regular);
 
-        m_ctx.scripts()->add_script((m_editor_script = std::make_shared<lua_script>()));
+        context::get().scripts()->add_script((m_editor_script = std::make_shared<lua_script>()));
 
         this->set_open(true);
         return true;
@@ -58,7 +56,7 @@ namespace aether {
 
     void ui_manager::render() {
 
-        m_ctx.scripts()->on_pre_ui();
+        context::get().scripts()->on_pre_ui();
 
         if (ImGui::IsKeyPressed(ImGuiKey_Insert, false)) {
             this->set_open(!this->is_open());
@@ -202,7 +200,7 @@ namespace aether {
         ImGui::PopStyleVar(8);
         ImGui::PopFont();
 
-        m_ctx.scripts()->on_post_ui();
+        context::get().scripts()->on_post_ui();
     }
 
     const ui_config& ui_manager::config() const {
